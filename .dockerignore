@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+!.env.example
+project_venv
+venv
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+docs/screenshots
+mlruns
+artifacts

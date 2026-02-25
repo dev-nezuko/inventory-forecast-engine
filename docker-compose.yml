@@ -1,0 +1,66 @@
+# docker compose up --build        API on :8000, dashboard on :8501
+# docker compose --profile test run --rm tests
+# docker compose --profile pipeline run --rm pipeline   (needs HASH_SALT in .env)
+x-image: &image
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    target: runtime
+
+services:
+  api:
+    <<: *image
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  dashboard:
+    <<: *image
+    command: ["streamlit", "run", "streamlit_demo.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+    environment:
+      FORECAST_API_URL: http://api:8000
+    ports: ["127.0.0.1:8501:8501"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      api:
+        condition: service_healthy
+
+  pipeline:
+    <<: *image
+    profiles: ["pipeline"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - pipeline-data:/data
+    command:
+      - sh
+      - -c
+      - >-
+        python -m src.synthetic --out /data &&
+        python -m src.ingest.ingest --credit_csv /data/credit.csv --panel_csv /data/panel.csv &&
+        python -m src.linking.link_panel_credit &&
+        python -m src.weighting.raking &&
+        python -m src.features.build_features &&
+        python -m src.models.train_gbm_quantile --horizon 12 --holdout 12 &&
+        python -m src.ensemble.ensemble_and_reconcile
+
+  tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: test
+    profiles: ["test"]
+    network_mode: none
+
+volumes:
+  pipeline-data:
