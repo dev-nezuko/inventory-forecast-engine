@@ -50,7 +50,7 @@ venv.bak/
 
 # Streamlit
 .streamlit/secrets.toml
-.streamlit/config.toml
+!.streamlit/config.toml
 
 # Data files (uncomment if you don't want to commit data)
 # *.csv
