@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 QUANTILE_COLS = ["q0.1", "q0.5", "q0.9"]
 KEYS = ["sku", "region", "date"]
-MODEL_FILES = {"lgb": "forecast_lgb.parquet", "deepar": "forecast_deepar.parquet"}
+MODEL_FILES = {"gbm": "forecast_gbm.parquet", "deepar": "forecast_deepar.parquet"}
 
 
 def load_optional(path: Path) -> pd.DataFrame | None:

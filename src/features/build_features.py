@@ -26,14 +26,16 @@ ADDITIVE = ["units_sold", "sales_dollars", "n_transactions"]
 
 
 def complete_weeks(weekly: pd.DataFrame) -> pd.DataFrame:
-    """Insert zero-sales rows for weeks with no transactions inside each series' span.
+    """Insert zero-sales rows for weeks with no transactions.
 
-    Without this, "lag 1" and the trailing mean silently reached back to the
-    last week that happened to have a sale.
+    Each series runs from its first sale to the last week in the data, so all
+    series end on the same week. Without this, "lag 1" and the trailing mean
+    silently reached back to the last week that happened to have a sale.
     """
+    end = weekly["week"].max()
     parts = []
     for (sku, region), g in weekly.groupby(SERIES, sort=True):
-        weeks = pd.date_range(g["week"].min(), g["week"].max(), freq="W-MON")
+        weeks = pd.date_range(g["week"].min(), end, freq="W-MON")
         full = g.drop(columns=SERIES).set_index("week").reindex(weeks)
         full = full.rename_axis("week").reset_index()
         full.insert(0, "region", region)
@@ -61,17 +63,14 @@ def add_lag_features(weekly: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def build() -> Path:
-    linked = pd.read_parquet(LANDING_DIR / "linked_panel_credit.parquet")
+def weekly_features(linked: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate linked transactions to one row per SKU x region x week with features."""
     check_required_columns(linked, REQUIRED_LINKED_COLS, "linked_panel_credit")
-
     # Weeks start on Monday
-    linked["week"] = (
-        pd.to_datetime(linked["txn_date"]).dt.to_period("W-SUN").dt.start_time
-    )
-
+    week = pd.to_datetime(linked["txn_date"]).dt.to_period("W-SUN").dt.start_time
     grouped = (
-        linked.groupby([*SERIES, "week"])
+        linked.assign(week=week)
+        .groupby([*SERIES, "week"])
         .agg(
             units_sold=("quantity", "sum"),
             sales_dollars=("amount", "sum"),
@@ -81,13 +80,18 @@ def build() -> Path:
         .reset_index()
     )
     grouped = add_lag_features(complete_weeks(grouped))
-
     grouped["weekofyear"] = grouped["week"].dt.isocalendar().week.astype(int)
     grouped["month"] = grouped["week"].dt.month.astype(int)
+    return grouped
 
+
+def build() -> Path:
+    features = weekly_features(
+        pd.read_parquet(LANDING_DIR / "linked_panel_credit.parquet")
+    )
     FEATURE_DIR.mkdir(parents=True, exist_ok=True)
     out = FEATURE_DIR / "features.parquet"
-    grouped.to_parquet(out, index=False)
+    features.to_parquet(out, index=False)
     print("Saved features:", out)
     return out
 

@@ -104,3 +104,20 @@ def test_series_do_not_leak_into_each_other() -> None:
     out = add_lag_features(weekly)
     assert out["lag_1_units"].isna().all()
     assert out["rolling_4w_mean"].isna().all()
+
+
+def test_every_series_runs_to_the_last_week_in_the_data() -> None:
+    from src.features.build_features import complete_weeks
+
+    weekly = pd.DataFrame(
+        {
+            "sku": ["S1", "S1", "S2"],
+            "region": ["NE", "NE", "NE"],
+            "week": pd.to_datetime(["2025-01-06", "2025-01-20", "2025-01-13"]),
+            "units_sold": [1.0, 2.0, 5.0],
+        }
+    )
+    out = complete_weeks(weekly)
+    s2 = out[out["sku"] == "S2"]
+    assert s2["week"].dt.strftime("%m-%d").tolist() == ["01-13", "01-20"]
+    assert s2["units_sold"].tolist() == [5.0, 0.0]

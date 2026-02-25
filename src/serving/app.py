@@ -14,7 +14,7 @@ from src.config import FEATURE_DIR
 app = FastAPI(title="Inventory forecast API")
 
 FORECAST_COLS = ["q0.1", "q0.5", "q0.9"]
-FORECAST_FILES = ["forecast_ensemble.parquet", "forecast_lgb.parquet"]
+FORECAST_FILES = ["forecast_ensemble.parquet", "forecast_gbm.parquet"]
 # Identifiers are only compared against artifact rows, never used to build a
 # path, but they are still restricted to a plain token so nothing else can be.
 IDENTIFIER = r"^[A-Za-z0-9][A-Za-z0-9_-]*$"
@@ -40,12 +40,12 @@ class ForecastRow(BaseModel):
 
 
 def _normalize_forecast_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Map model-suffixed quantile columns (q0.5_lgb, q0.5_deepar) to q0.1/q0.5/q0.9."""
+    """Map model-suffixed quantile columns (q0.5_gbm, q0.5_deepar) to q0.1/q0.5/q0.9."""
     renames = {}
     for c in FORECAST_COLS:
         if c in df.columns:
             continue
-        for suffix in ("_lgb", "_deepar"):
+        for suffix in ("_gbm", "_deepar"):
             if f"{c}{suffix}" in df.columns:
                 renames[f"{c}{suffix}"] = c
                 break
@@ -66,7 +66,7 @@ def _read_forecast(path: Path, mtime_ns: int) -> pd.DataFrame:
 
 
 def _load_any_forecast() -> pd.DataFrame:
-    """Load the first available forecast artifact (ensemble, then lgb)."""
+    """Load the first available forecast artifact (ensemble, then gbm)."""
     for fname in FORECAST_FILES:
         path = FEATURE_DIR / fname
         if path.is_file():

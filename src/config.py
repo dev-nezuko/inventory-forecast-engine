@@ -6,11 +6,8 @@ ROOT = Path(os.environ.get("PROJECT_ROOT", str(Path(__file__).resolve().parents[
 
 # Data layout (override via env vars). Writers create these folders on demand.
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "examples" / "sample_data"))
-RAW_DIR = DATA_DIR / "raw"
 LANDING_DIR = DATA_DIR / "landing"
 FEATURE_DIR = DATA_DIR / "features"
-MODEL_DIR = ROOT / "artifacts" / "models"
-MLFLOW_TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 
 HASH_KEY_ENV = "HASH_SALT"
 MIN_HASH_KEY_LENGTH = 16

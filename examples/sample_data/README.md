@@ -13,6 +13,8 @@ person, household or transaction is represented.
 | `landing/linked_panel_credit.parquet` | `src.linking.link_panel_credit` (pseudonyms from a throwaway key) |
 | `landing/panel_weighted.parquet` | `src.weighting.raking` (toy targets) |
 | `features/features.parquet` | `src.features.build_features` |
+| `features/forecast_gbm.parquet`, `features/gbm_backtest.json` | `src.models.train_gbm_quantile --horizon 12 --holdout 12` |
+| `features/forecast_ensemble.parquet` | `src.ensemble.ensemble_and_reconcile` (GBM only, so the same values) |
 
 Input columns:
 

@@ -77,8 +77,8 @@ def test_forecast_404_sku_region_not_in_file(
     assert "No forecast found" in r.json()["detail"]
 
 
-def test_normalize_forecast_columns_lgb_suffix() -> None:
-    df = pd.DataFrame({"q0.1_lgb": [1], "q0.5_lgb": [2], "q0.9_lgb": [3]})
+def test_normalize_forecast_columns_gbm_suffix() -> None:
+    df = pd.DataFrame({"q0.1_gbm": [1], "q0.5_gbm": [2], "q0.9_gbm": [3]})
     out = _normalize_forecast_columns(df)
     assert "q0.1" in out.columns and out["q0.1"].iloc[0] == 1
 
@@ -148,7 +148,7 @@ def test_forecast_reloads_artifact_after_it_changes(
     assert len(first) == 1 and len(second) == 4
 
 
-def test_lgb_artifact_columns_are_normalised(
+def test_gbm_artifact_columns_are_normalised(
     client: TestClient, tmp_path: Path
 ) -> None:
     pd.DataFrame(
@@ -156,11 +156,11 @@ def test_lgb_artifact_columns_are_normalised(
             "sku": ["S1"],
             "region": ["NE"],
             "date": ["2025-02-03"],
-            "q0.1_lgb": [1.0],
-            "q0.5_lgb": [2.0],
-            "q0.9_lgb": [3.0],
+            "q0.1_gbm": [1.0],
+            "q0.5_gbm": [2.0],
+            "q0.9_gbm": [3.0],
         }
-    ).to_parquet(tmp_path / "forecast_lgb.parquet", index=False)
+    ).to_parquet(tmp_path / "forecast_gbm.parquet", index=False)
     with patch("src.serving.app.FEATURE_DIR", tmp_path):
         r = client.post("/forecast", json={"sku": "S1", "region": "NE"})
     assert r.status_code == 200

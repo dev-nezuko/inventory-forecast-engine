@@ -95,7 +95,7 @@ def load_api_index():
     try:
         for fname in [
             "forecast_ensemble.parquet",
-            "forecast_lgb.parquet",
+            "forecast_gbm.parquet",
             "forecast_deepar.parquet",
         ]:
             path = FEATURE_DIR / fname
