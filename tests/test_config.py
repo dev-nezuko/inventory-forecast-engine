@@ -22,6 +22,7 @@ def test_data_dir_default() -> None:
 
 def test_project_root_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     import importlib
+
     import src.config as mod
 
     monkeypatch.setenv("PROJECT_ROOT", "/tmp/custom_root")

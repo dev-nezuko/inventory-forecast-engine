@@ -1,6 +1,7 @@
 """
 PyMC hierarchical model training stub. Not yet implemented.
 """
+
 from __future__ import annotations
 
 

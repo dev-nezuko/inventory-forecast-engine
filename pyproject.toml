@@ -1,0 +1,17 @@
+[project]
+name = "inventory-forecast-engine"
+version = "0.2.0"
+description = "SKU x region weekly demand forecasting pipeline with a quantile baseline"
+requires-python = ">=3.12,<3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py312"
+extend-exclude = ["project_venv", "venv"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "I", "B", "UP"]

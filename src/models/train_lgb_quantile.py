@@ -2,6 +2,7 @@
 LightGBM quantile training stub. Not yet implemented.
 Run from repo root: python -m src.models.train_lgb_quantile --quantiles 0.1 0.5 0.9 --horizon 12
 """
+
 from __future__ import annotations
 
 import argparse

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.config import LANDING_DIR, FEATURE_DIR
+from src.config import FEATURE_DIR, LANDING_DIR
 from src.utils.validation import check_required_columns
 
 REQUIRED_LINKED_COLS = [

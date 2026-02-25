@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.ensemble.ensemble_and_reconcile import load_optional, ensemble
+from src.ensemble.ensemble_and_reconcile import ensemble, load_optional
 
 
 def test_load_optional_missing_returns_none(tmp_path: Path) -> None:

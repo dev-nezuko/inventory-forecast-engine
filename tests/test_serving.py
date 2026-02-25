@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from src.serving.app import app, _normalize_forecast_columns
+from src.serving.app import _normalize_forecast_columns, app
 
 
 @pytest.fixture

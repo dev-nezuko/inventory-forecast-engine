@@ -1,0 +1,10 @@
+# Optional research/orchestration packages. Not part of the core install and
+# not exercised by the test suite: the DeepAR and PyMC trainers are stubs, the
+# Airflow DAG is a sketch, and MLflow logging is only used when
+# MLFLOW_TRACKING_URI is set. Airflow should be installed with its official
+# constraints file (see the Airflow docs).
+mlflow==3.18.0
+pymc==6.4.0
+arviz==1.3.0
+gluonts==0.17.0
+apache-airflow==3.4.0

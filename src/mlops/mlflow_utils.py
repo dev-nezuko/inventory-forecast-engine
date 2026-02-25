@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 import mlflow
 
 
-def start_run(params: Dict[str, str] | None = None):
+def start_run(params: dict[str, str] | None = None):
     """Start an MLflow run and optionally log params."""
     run = mlflow.start_run()
     if params:
@@ -16,7 +14,7 @@ def start_run(params: Dict[str, str] | None = None):
     return run
 
 
-def log_metrics(metrics: Dict[str, float]) -> None:
+def log_metrics(metrics: dict[str, float]) -> None:
     """Log each key-value in metrics as an MLflow metric."""
     for k, v in metrics.items():
         mlflow.log_metric(k, float(v))

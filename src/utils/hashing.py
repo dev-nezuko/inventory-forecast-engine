@@ -1,13 +1,12 @@
 """HMAC-SHA256 pseudonyms for customer-ID linkage; source identifiers are not removed."""
 
-import hmac
 import hashlib
-from typing import Optional
+import hmac
 
 from src.config import SALT
 
 
-def hash_id(raw_id: Optional[str], salt: str = SALT) -> Optional[str]:
+def hash_id(raw_id: str | None, salt: str = SALT) -> str | None:
     """Stable HMAC-SHA256 hash for privacy-preserving IDs. Salt as str is encoded to bytes."""
     if raw_id is None:
         return None

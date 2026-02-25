@@ -1,20 +1,33 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
 
 
 def _run(cmd: list[str]):
     import subprocess
+
     print("Running:", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
 
 def run_ingest(**kwargs):
     import os
+
     data_dir = os.environ.get("DATA_DIR", "./examples/sample_data")
-    _run(["python", "-m", "src.ingest.ingest", "--credit_csv", f"{data_dir}/credit.csv", "--panel_csv", f"{data_dir}/panel.csv"])
+    _run(
+        [
+            "python",
+            "-m",
+            "src.ingest.ingest",
+            "--credit_csv",
+            f"{data_dir}/credit.csv",
+            "--panel_csv",
+            f"{data_dir}/panel.csv",
+        ]
+    )
 
 
 def run_link(**kwargs):
@@ -30,7 +43,19 @@ def build_feat(**kwargs):
 
 
 def train_lgb(**kwargs):
-    _run(["python", "-m", "src.models.train_lgb_quantile", "--quantiles", "0.1", "0.5", "0.9", "--horizon", "12"])
+    _run(
+        [
+            "python",
+            "-m",
+            "src.models.train_lgb_quantile",
+            "--quantiles",
+            "0.1",
+            "0.5",
+            "0.9",
+            "--horizon",
+            "12",
+        ]
+    )
 
 
 def train_deepar(**kwargs):
@@ -57,7 +82,6 @@ with DAG(
     catchup=False,
     tags=["mvp"],
 ) as dag:
-
     ingest = PythonOperator(task_id="ingest", python_callable=run_ingest)
     link = PythonOperator(task_id="link", python_callable=run_link)
     rake = PythonOperator(task_id="rake", python_callable=run_rake)

@@ -1,14 +1,12 @@
-# Run unit tests from repo root (PYTHONPATH set by conftest.py)
+# Run from the repo root; pytest finds src/ through pyproject.toml
 test:
-	pytest tests/ -v
+	python -m pytest
 
-# Run linter (ruff)
 lint:
-	ruff check src tests
-	ruff format --check src tests
+	ruff check .
+	ruff format --check .
 
-# Format code
 format:
-	ruff format src tests
+	ruff format .
 
 .PHONY: test lint format
