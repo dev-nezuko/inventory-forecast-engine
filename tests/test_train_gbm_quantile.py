@@ -81,8 +81,9 @@ def test_backtest_ignores_weeks_after_the_cutoff(features: pd.DataFrame) -> None
 
 
 def test_backtest_reports_labelled_metrics(features: pd.DataFrame) -> None:
-    m = backtest(features, holdout=6)
-    assert m["data"].startswith("synthetic")
+    m = backtest(features, holdout=6, data_label="synthetic test data")
+    assert m["data"] == "synthetic test data"
+    assert backtest(features, holdout=6)["data"] == "unlabelled"
     assert m["series"] == 16 and m["rows_scored"] == 16 * 6
     assert set(m["wape"]) == {
         "gbm_median",

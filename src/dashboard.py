@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -158,3 +159,18 @@ def call_forecast_api(
             detail = r.text
         return None, f"API answered {r.status_code}: {detail}"
     return r.json(), None
+
+
+def backtest_note(bt: dict) -> str:
+    """HTML caption for the backtest, worded by what the data is labelled as."""
+    label = str(bt.get("data", "unlabelled"))
+    window = (
+        f"weeks {html.escape(str(bt['holdout_weeks']))} were hidden from training and forecast "
+        f"recursively from the cutoff, {int(bt['rows_scored'])} series-weeks in all."
+    )
+    if label.startswith("synthetic"):
+        return (
+            f"Measured on <strong>synthetic data</strong>: {window} These numbers say the code "
+            "works, not how it would do on real demand."
+        )
+    return f"Measured on data labelled <strong>{html.escape(label)}</strong>: {window}"

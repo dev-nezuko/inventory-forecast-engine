@@ -51,7 +51,7 @@ services:
         python -m src.linking.link_panel_credit &&
         python -m src.weighting.raking &&
         python -m src.features.build_features &&
-        python -m src.models.train_gbm_quantile --horizon 12 --holdout 12 &&
+        python -m src.models.train_gbm_quantile --horizon 12 --holdout 12 --data-label synthetic &&
         python -m src.ensemble.ensemble_and_reconcile
 
   tests:

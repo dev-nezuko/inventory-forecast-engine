@@ -82,7 +82,7 @@ python -m src.ingest.ingest --credit_csv "$DATA_DIR/credit.csv" --panel_csv "$DA
 python -m src.linking.link_panel_credit
 python -m src.weighting.raking
 python -m src.features.build_features
-python -m src.models.train_gbm_quantile --horizon 12 --holdout 12
+python -m src.models.train_gbm_quantile --horizon 12 --holdout 12 --data-label synthetic
 python -m src.ensemble.ensemble_and_reconcile
 ```
 
@@ -104,7 +104,7 @@ streamlit run streamlit_demo.py --server.address 127.0.0.1
 
 `train_gbm_quantile` fits one `HistGradientBoostingRegressor` with pinball loss for each of the 0.1, 0.5 and 0.9 quantiles. Inputs are the units sold one and two weeks earlier, the mean of the four weeks before, a yearly sine/cosine of the week number and integer SKU and region codes. Forecasts for several weeks are recursive: each week's median becomes the next week's lag. Predictions are clipped at zero and sorted per row so the quantiles never cross.
 
-Every run starts with a holdout: the last `--holdout` weeks of every series are hidden, the model is trained on the rest and forecasts the hidden weeks from the cutoff. Two naive forecasts are scored on the same rows. The result on the bundled **synthetic** data (`examples/sample_data/features/gbm_backtest.json`, 16 series, holdout 2025-10-06 to 2025-12-22, 192 series-weeks):
+Every run starts with a holdout (`--data-label` records in the JSON what the data was, and the dashboard only calls it synthetic when it says so): the last `--holdout` weeks of every series are hidden, the model is trained on the rest and forecasts the hidden weeks from the cutoff. Two naive forecasts are scored on the same rows. The result on the bundled **synthetic** data (`examples/sample_data/features/gbm_backtest.json`, 16 series, holdout 2025-10-06 to 2025-12-22, 192 series-weeks):
 
 | Forecast | WAPE |
 | --- | --- |

@@ -14,6 +14,7 @@ import streamlit as st
 
 from src.config import DATA_DIR
 from src.dashboard import (
+    backtest_note,
     call_forecast_api,
     load_artifacts,
     pipeline_stages,
@@ -138,12 +139,7 @@ def _backtest_section(bt: dict | None) -> None:
             "No backtest yet. Run `python -m src.models.train_gbm_quantile` to create one."
         )
         return
-    st.html(
-        f'<p class="desk-note">Measured on <strong>synthetic data</strong>: weeks '
-        f"{bt['holdout_weeks']} were hidden from training and forecast recursively from the "
-        f"cutoff, {bt['rows_scored']} series-weeks in all. These numbers say the code works, "
-        "not how it would do on real demand.</p>"
-    )
+    st.html(f'<p class="desk-note">{backtest_note(bt)}</p>')
     labels = {
         "gbm_median": "GBM median",
         "trailing_4w_mean": "Mean of last 4 weeks",

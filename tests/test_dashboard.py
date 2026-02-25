@@ -10,6 +10,7 @@ import requests
 
 from src.config import ROOT
 from src.dashboard import (
+    backtest_note,
     call_forecast_api,
     load_artifacts,
     pipeline_stages,
@@ -116,3 +117,11 @@ def test_busiest_series_is_the_default() -> None:
     sku, region = a.busiest_series()
     totals = a.features.groupby(["sku", "region"])["units_sold"].sum()
     assert totals[(sku, region)] == totals.max()
+
+
+def test_backtest_note_follows_the_data_label() -> None:
+    bt = {"holdout_weeks": "2025-10-06 to 2025-12-22", "rows_scored": 192}
+    assert "synthetic data" in backtest_note({**bt, "data": "synthetic"})
+    other = backtest_note({**bt, "data": "<b>store 12</b>"})
+    assert "synthetic" not in other
+    assert "&lt;b&gt;store 12&lt;/b&gt;" in other
