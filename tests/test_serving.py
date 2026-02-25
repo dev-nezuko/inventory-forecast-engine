@@ -81,3 +81,96 @@ def test_normalize_forecast_columns_lgb_suffix() -> None:
     df = pd.DataFrame({"q0.1_lgb": [1], "q0.5_lgb": [2], "q0.9_lgb": [3]})
     out = _normalize_forecast_columns(df)
     assert "q0.1" in out.columns and out["q0.1"].iloc[0] == 1
+
+
+def _write_forecast(path: Path, n: int = 3) -> None:
+    pd.DataFrame(
+        {
+            "sku": ["S1"] * n,
+            "region": ["NE"] * n,
+            "date": pd.date_range("2025-02-03", periods=n, freq="W-MON")[::-1],
+            "q0.1": [1.0] * n,
+            "q0.5": [2.0] * n,
+            "q0.9": [3.0] * n,
+        }
+    ).to_parquet(path / "forecast_ensemble.parquet", index=False)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"sku": "../../etc/passwd", "region": "NE"},
+        {"sku": "S1", "region": "NE/../../x"},
+        {"sku": "S1", "region": ""},
+        {"sku": "S" * 65, "region": "NE"},
+        {"sku": "S1", "region": "NE", "horizon_weeks": 0},
+        {"sku": "S1", "region": "NE", "horizon_weeks": -1},
+        {"sku": "S1", "region": "NE", "horizon_weeks": 53},
+        {"sku": "S1", "region": "NE", "extra": 1},
+    ],
+)
+def test_forecast_rejects_bad_input(
+    client: TestClient, tmp_path: Path, payload: dict
+) -> None:
+    _write_forecast(tmp_path)
+    with patch("src.serving.app.FEATURE_DIR", tmp_path):
+        r = client.post("/forecast", json=payload)
+    assert r.status_code == 422
+
+
+def test_forecast_returns_earliest_weeks_in_order(
+    client: TestClient, tmp_path: Path
+) -> None:
+    _write_forecast(tmp_path, n=3)
+    with patch("src.serving.app.FEATURE_DIR", tmp_path):
+        r = client.post(
+            "/forecast", json={"sku": "S1", "region": "NE", "horizon_weeks": 2}
+        )
+    assert r.status_code == 200
+    assert [row["date"] for row in r.json()] == ["2025-02-03", "2025-02-10"]
+
+
+def test_forecast_reloads_artifact_after_it_changes(
+    client: TestClient, tmp_path: Path
+) -> None:
+    import os
+
+    _write_forecast(tmp_path, n=1)
+    with patch("src.serving.app.FEATURE_DIR", tmp_path):
+        first = client.post("/forecast", json={"sku": "S1", "region": "NE"}).json()
+        _write_forecast(tmp_path, n=4)
+        stat = (tmp_path / "forecast_ensemble.parquet").stat()
+        os.utime(
+            tmp_path / "forecast_ensemble.parquet",
+            ns=(stat.st_atime_ns, stat.st_mtime_ns + 10**9),
+        )
+        second = client.post("/forecast", json={"sku": "S1", "region": "NE"}).json()
+    assert len(first) == 1 and len(second) == 4
+
+
+def test_lgb_artifact_columns_are_normalised(
+    client: TestClient, tmp_path: Path
+) -> None:
+    pd.DataFrame(
+        {
+            "sku": ["S1"],
+            "region": ["NE"],
+            "date": ["2025-02-03"],
+            "q0.1_lgb": [1.0],
+            "q0.5_lgb": [2.0],
+            "q0.9_lgb": [3.0],
+        }
+    ).to_parquet(tmp_path / "forecast_lgb.parquet", index=False)
+    with patch("src.serving.app.FEATURE_DIR", tmp_path):
+        r = client.post("/forecast", json={"sku": "S1", "region": "NE"})
+    assert r.status_code == 200
+    assert r.json() == [
+        {
+            "sku": "S1",
+            "region": "NE",
+            "date": "2025-02-03",
+            "q0.1": 1.0,
+            "q0.5": 2.0,
+            "q0.9": 3.0,
+        }
+    ]
