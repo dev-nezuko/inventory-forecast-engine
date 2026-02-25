@@ -1,12 +1,28 @@
-# Demonstration data and artifacts
+# Synthetic demonstration data
 
-This folder includes example CSV input and precomputed Parquet files for inspecting the pipeline and serving layers. The supplied forecasts are demonstration artifacts, not a reproduced training result: all three model-training entry points are currently stubs.
+Everything in this folder is invented by `python -m src.synthetic` (seed 7): 400
+made-up customers (`C0001`...), 240 of them in the panel, and two years of
+weekly demand (2024-01-01 to 2025-12-28) for four SKUs in four regions, shaped
+by a level, a slight trend, yearly seasonality and Poisson noise. No real
+person, household or transaction is represented.
+
+| File | Produced by |
+| --- | --- |
+| `credit.csv`, `panel.csv` | `src.synthetic` |
+| `landing/credit_txn.parquet`, `landing/panel.parquet` | `src.ingest.ingest` |
+| `landing/linked_panel_credit.parquet` | `src.linking.link_panel_credit` (pseudonyms from a throwaway key) |
+| `landing/panel_weighted.parquet` | `src.weighting.raking` (toy targets) |
+| `features/features.parquet` | `src.features.build_features` |
 
 Input columns:
 
 - `credit.csv`: `txn_id, customer_id, txn_date, sku, region, amount, price, quantity`
 - `panel.csv`: `panel_id, customer_id, age_group, region, income_bin, household_size`
 
-`landing/` contains intermediate tables; `features/` contains aggregated features and forecast-shaped artifacts. Running ingestion, linkage, or feature commands with this folder as `DATA_DIR` can overwrite them. Use another data directory for experiments you want to keep separate.
+Running the pipeline with this folder as `DATA_DIR` overwrites these files. Point
+`DATA_DIR` at a copy for experiments you want to keep apart.
 
-Customer identifiers are retained in source/landing files. Hashed linkage keys do not make the whole dataset anonymous. Never replace these examples with real transaction or household data in a public repository.
+The linked table keeps only the HMAC pseudonym, but `credit.csv`, `panel.csv` and
+the landing files still hold the raw customer IDs; pseudonymisation is not
+anonymisation. Never replace these examples with real transaction or household
+data in a public repository.
