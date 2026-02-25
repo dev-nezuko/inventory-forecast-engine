@@ -129,3 +129,57 @@ def test_main_success_writes_parquet(
     ingest_mod.main(str(credit_csv), str(panel_csv))
     assert (tmp_path / "credit_txn.parquet").exists()
     assert (tmp_path / "panel.parquet").exists()
+
+
+def _credit_frame(**overrides) -> pd.DataFrame:
+    data = {
+        "txn_id": [1, 2],
+        "customer_id": ["x", "y"],
+        "txn_date": ["2025-01-01", "2025-01-08"],
+        "sku": ["S1", "S1"],
+        "region": ["NE", "NE"],
+        "amount": [10.0, 4.0],
+        "price": [2.0, 2.0],
+        "quantity": [5, 2],
+    }
+    data.update(overrides)
+    return pd.DataFrame(data)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        (
+            {"txn_date": ["2025-01-01", "next tuesday"]},
+            "txn_date is not an ISO date in 1 row",
+        ),
+        ({"quantity": [5, "two"]}, "quantity is not numeric in 1 row"),
+        ({"price": [2.0, -1.0]}, "price is negative"),
+        ({"txn_id": [7, 7]}, "txn_id is duplicated"),
+    ],
+)
+def test_validate_credit_rejects_bad_rows(overrides: dict, message: str) -> None:
+    from src.ingest.ingest import validate_credit
+
+    with pytest.raises(ValueError, match=message):
+        validate_credit(_credit_frame(**overrides))
+
+
+def test_validate_credit_parses_dates() -> None:
+    from src.ingest.ingest import validate_credit
+
+    out = validate_credit(_credit_frame())
+    assert str(out["txn_date"].dtype).startswith("datetime64")
+
+
+def test_nothing_is_landed_when_panel_is_invalid(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.ingest.ingest as ingest_mod
+
+    monkeypatch.setattr(ingest_mod, "LANDING_DIR", tmp_path / "landing")
+    _credit_frame().to_csv(tmp_path / "credit.csv", index=False)
+    pd.DataFrame({"panel_id": ["p1"]}).to_csv(tmp_path / "panel.csv", index=False)
+    with pytest.raises(ValueError, match="panel_csv missing"):
+        ingest_mod.main(str(tmp_path / "credit.csv"), str(tmp_path / "panel.csv"))
+    assert not (tmp_path / "landing").exists()
